@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#f3f6fa">
+<title>行为积分记账本</title>
+<meta name="description" content="孩子每天行为完成情况奖惩记账本：月历显示每日得分，点击可查看并加减分明细。数据保存在本机浏览器，离线可用。">
+<meta name="apple-mobile-web-app-title" content="积分本">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="format-detection" content="telephone=no">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20rx='14'%20fill='%234f7cff'/%3E%3Cpath%20d='M17%2033L27%2043L48%2021'%20stroke='%23fff'%20stroke-width='7'%20fill='none'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAACbElEQVR42u3c0U1EMQxFQTpMQ693KAAEErtxcu15OhXY87PaJB/r+ZR+7MMIBIfgEByCQ3AIDsEhOASH4JDgEByCQ3AIDsEhOASH4BAcEhyCQ3AIDsEhOASH4BAcgkOCQ3AIDsEhOASH4BAcgkNwCA4JDsEhOASH4BAcgkNwCA6V9P2Dg4m/PzjIuMgHHDEy6n3AkSSj2AccYTIqfcCRJwMOMuAg42IfcETKgIMMOMiAgww4VCEDDjL8lCUDDjLgUBMZcJABBxlwkAEHGXCQcfoAOhxkwEEGHGTAQQYcZMBBxoUy4CDjbhyXD2isjJM4Eoc1SsYxHIkjmybjDI7EwQ2UcQBH4vhmyqjGkTjEsTKScBwZ5WQZYTiKBzpcRimOrLGSEYmjYLhkBOPYOmIy4nFsGjQZTXC8fdxktMLxxqGTEf9TdtPoyWiL48UFkNEcx7/XQEb8H2+blkFG/F/2m1ZCRvxhn02LISP+mOCm9ZARcMD4yJLIiDl9XrwqMuKvJmxaGBmRl5oK1kZG8I233K/x3b6LrkOSAUcfH+1vBV93kZoMOLJ9DHlP4NInGMiAI8/HqJdIrn68hQw4MnxMk7Einn0iA457fcyUsYIejCMDjrt8TJax4p6aJAOO8z7IWKGP1JIBR97lOTg6+wCiCY71kAFHiQ8UGuJYDxlwbPMBQXMc6yEDjrf6sP5BONZDBhwv+7D4oTh+UWLfcAgOwSE4BIfgEByCQ3BIcAgOwSE4BIfgEByCQ3AIDgkOwSE4BIfgEByCQ3AIDsEhOCQ4BIfgEByCQ3AIDsEhOASHBIfgEByCQ3AIDsGh5L4AGZ89Sr755HgAAAAASUVORK5CYII=">
+<link rel="canonical" href="./">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif;
+  background:#f3f6fa;color:#1f2937;font-size:16px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:calc(70px + env(safe-area-inset-bottom));
+  overflow-x:hidden;
+}
+button{font-family:inherit;font-size:inherit;color:inherit;border:none;background:none;cursor:pointer}
+input{font-family:inherit;font-size:16px}
+.hide{display:none !important}
+
+/* ---------- 顶栏 ---------- */
+.topbar{
+  position:sticky;top:0;z-index:20;background:#fff;
+  padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
+  display:flex;align-items:center;justify-content:space-between;
+  box-shadow:0 1px 0 rgba(15,23,42,.06);
+}
+.topbar h1{font-size:18px;margin:0;font-weight:700;letter-spacing:.5px}
+.mini-btn{
+  min-height:36px;padding:0 14px;border-radius:18px;background:#eef2f9;color:#3b5bdb;
+  font-size:14px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;
+}
+.mini-btn:active{background:#dfe6f5}
+
+/* ---------- 月份切换 ---------- */
+.monthbar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px}
+.navbtn{
+  width:44px;height:44px;border-radius:14px;background:#fff;display:flex;align-items:center;justify-content:center;
+  font-size:20px;color:#4b5563;box-shadow:0 1px 4px rgba(15,23,42,.08)
+}
+.navbtn:active{background:#eef2f9}
+.monthtitle{font-size:20px;font-weight:700}
+.monthtitle span{font-size:13px;color:#9ca3af;font-weight:500;display:block;text-align:center}
+
+/* ---------- 汇总卡 ---------- */
+.sumcard{
+  margin:6px 14px 12px;background:linear-gradient(135deg,#4f7cff,#6ea8ff);color:#fff;
+  border-radius:18px;padding:16px 18px;box-shadow:0 6px 18px rgba(79,124,255,.25)
+}
+.sumcard .row{display:flex;align-items:flex-end;justify-content:space-between}
+.sumcard .big{font-size:34px;font-weight:800;line-height:1.1}
+.sumcard .big small{font-size:14px;font-weight:600;opacity:.85;margin-left:4px}
+.sumcard .lbl{font-size:13px;opacity:.9}
+.sumgrid{display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.25)}
+.sumgrid div{flex:1;text-align:center}
+.sumgrid b{display:block;font-size:18px;font-weight:700}
+.sumgrid i{font-style:normal;font-size:12px;opacity:.9}
+
+/* ---------- 日历 ---------- */
+.cal{background:#fff;margin:0 14px 16px;border-radius:18px;padding:12px 10px 14px;box-shadow:0 2px 12px rgba(31,41,55,.06)}
+.week,.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.wd{text-align:center;font-size:12px;color:#9ca3af;padding:2px 0 8px;font-weight:600}
+.wd.we{color:#f08a8a}
+.cell{
+  min-height:56px;border-radius:14px;background:#f7f9fc;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:1px;padding:4px 0;transition:.15s
+}
+.cell:active{transform:scale(.94)}
+.cell .d{font-size:12px;color:#8a93a3;font-weight:600}
+.cell .s{font-size:17px;font-weight:800;line-height:1.15}
+.cell.empty{background:transparent}
+.cell.has{background:#eaf2ff}
+.cell.plus{background:#e6f7ec}
+.cell.minus{background:#fdeceb}
+.cell.today{outline:2px solid #4f7cff;outline-offset:-2px}
+.cell.today .d{color:#4f7cff}
+.s-plus{color:#12a150}.s-minus{color:#e2544c}.s-zero{color:#adb5bd}.s-none{color:#d3d8e0;font-weight:600}
+.tip{text-align:center;font-size:12px;color:#9ca3af;padding:2px 0 14px}
+
+/* ---------- 底部导航 ---------- */
+.tabbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:30;background:#fff;display:flex;
+  box-shadow:0 -1px 0 rgba(15,23,42,.07);padding-bottom:env(safe-area-inset-bottom)
+}
+.tab{flex:1;min-height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#9aa3b2;font-size:12px}
+.tab .ico{font-size:20px;line-height:1}
+.tab.on{color:#4f7cff;font-weight:700}
+
+/* ---------- 弹层 ---------- */
+.mask{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:40;opacity:0;pointer-events:none;transition:.25s}
+.mask.show{opacity:1;pointer-events:auto}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:50;background:#f3f6fa;
+  border-radius:22px 22px 0 0;max-height:92vh;display:flex;flex-direction:column;
+  transform:translateY(101%);transition:transform .28s cubic-bezier(.32,.72,0,1)
+}
+.sheet.show{transform:translateY(0)}
+.sheet-hd{
+  background:#fff;padding:14px 16px 12px;display:flex;align-items:center;justify-content:space-between;
+  border-radius:22px 22px 0 0;border-bottom:1px solid #eef1f6;flex:0 0 auto
+}
+.sheet-hd .t{font-size:17px;font-weight:700}
+.sheet-hd .t em{font-style:normal;font-size:12px;color:#9ca3af;display:block;font-weight:500}
+.sheet-hd .sc{font-size:26px;font-weight:800}
+.close{width:40px;height:40px;border-radius:50%;background:#f1f4f9;color:#6b7280;font-size:18px;display:flex;align-items:center;justify-content:center}
+.sheet-bd{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 12px calc(24px + env(safe-area-inset-bottom))}
+
+.card{background:#fff;border-radius:16px;padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 6px rgba(31,41,55,.05)}
+.card h3{margin:0 0 10px;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:space-between}
+.card h3 small{font-size:12px;color:#9ca3af;font-weight:500}
+
+/* 行为勾选 */
+.beh{
+  width:100%;min-height:52px;display:flex;align-items:center;gap:12px;background:#f7f9fc;
+  border-radius:13px;padding:8px 12px;margin-bottom:8px;text-align:left
+}
+.beh:last-child{margin-bottom:0}
+.beh:active{background:#eef2f9}
+.beh .box{
+  width:26px;height:26px;border-radius:9px;border:2px solid #cdd5e3;flex:0 0 26px;
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px
+}
+.beh .nm{flex:1;font-size:15px;font-weight:600;color:#4b5563}
+.beh .pt{font-size:14px;font-weight:700;color:#12a150}
+.beh.on{background:#e6f7ec}
+.beh.on .box{background:#12a150;border-color:#12a150}
+.beh.on .nm{color:#0d7a3c}
+
+/* 加分/扣分 快捷 chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  min-height:44px;padding:8px 14px;border-radius:22px;font-size:14px;font-weight:600;
+  background:#f2f5fa;color:#4b5563;display:inline-flex;align-items:center;gap:6px
+}
+.chip:active{transform:scale(.95)}
+.chip.p{background:#e6f7ec;color:#0d7a3c}
+.chip.m{background:#fdeceb;color:#c9372f}
+.chip b{font-weight:800}
+
+/* 记录条目 */
+.rec{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px dashed #eef1f6}
+.rec:last-child{border-bottom:none}
+.rec .l{flex:1;min-width:0}
+.rec .n{font-size:15px;font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.rec .v{font-size:14px;font-weight:800}
+.note{
+  width:100%;margin-top:6px;min-height:38px;border:1px solid #e6eaf1;border-radius:10px;
+  padding:8px 10px;background:#fafbfd;font-size:13px;color:#4b5563
+}
+.note:focus{outline:none;border-color:#a9c2ff;background:#fff}
+.del{width:40px;height:40px;flex:0 0 40px;border-radius:12px;background:#fdeceb;color:#d9534f;font-size:16px;display:flex;align-items:center;justify-content:center}
+.empty-tip{color:#aab2c0;font-size:13px;text-align:center;padding:14px 0}
+
+/* 自定义表单 */
+.custom{background:#f7f9fc;border-radius:14px;padding:12px;margin-top:10px}
+.frow{display:flex;gap:8px;margin-bottom:8px}
+.frow input{
+  flex:1;min-height:46px;border:1px solid #e2e7f0;border-radius:12px;padding:8px 12px;background:#fff;width:100%
+}
+.frow input:focus{outline:none;border-color:#a9c2ff}
+.frow .w80{flex:0 0 90px;text-align:center}
+.seg{display:flex;gap:6px;flex:0 0 auto}
+.seg button{min-height:46px;padding:0 14px;border-radius:12px;background:#fff;border:1px solid #e2e7f0;color:#8a93a3;font-weight:600}
+.seg button.on{background:#4f7cff;border-color:#4f7cff;color:#fff}
+.seg button.on.m{background:#e2544c;border-color:#e2544c}
+.btn{
+  width:100%;min-height:48px;border-radius:14px;background:#4f7cff;color:#fff;font-weight:700;font-size:15px;
+  display:flex;align-items:center;justify-content:center;gap:6px
+}
+.btn:active{opacity:.85}
+.btn.ghost{background:#eef2f9;color:#4f7cff}
+.btn.danger{background:#fdeceb;color:#d9534f}
+.btn.sm{min-height:44px;font-size:14px}
+.addlink{width:100%;min-height:46px;border-radius:13px;border:1.5px dashed #c9d3e6;color:#6b7a90;font-weight:600;font-size:14px;margin-top:4px}
+
+/* 管理页 */
+.mrow{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f2f5fa}
+.mrow:last-child{border-bottom:none}
+.mrow input{min-height:44px;border:1px solid #e6eaf1;border-radius:11px;padding:8px 10px;background:#fafbfd}
+.mrow input:focus{outline:none;border-color:#a9c2ff;background:#fff}
+.mrow .inm{flex:1;min-width:0;font-weight:600}
+.mrow .ipt{flex:0 0 74px;text-align:center;font-weight:700}
+.mrow .ipt.p{color:#12a150}.mrow .ipt.m{color:#e2544c}
+.icobtn{width:44px;height:44px;flex:0 0 44px;border-radius:12px;background:#fdeceb;color:#d9534f;font-size:17px;display:flex;align-items:center;justify-content:center}
+.subttl{font-size:13px;color:#8a93a3;font-weight:600;margin:10px 0 2px}
+.dangerzone{margin:0 14px 20px}
+.hint{font-size:12px;color:#9aa3b2;line-height:1.6;margin-top:10px}
+
+/* ---------- 口令锁屏 ---------- */
+body.locked>*:not(#lock){display:none !important}
+.lockwrap{
+  position:fixed;inset:0;z-index:100;background:#f3f6fa;
+  display:flex;align-items:center;justify-content:center;padding:24px;
+  padding-top:calc(24px + env(safe-area-inset-top));
+}
+.lockcard{width:100%;max-width:360px;text-align:center}
+.lockico{font-size:44px;line-height:1;margin-bottom:10px}
+.lockttl{font-size:22px;font-weight:800;color:#1f2937}
+.locksub{font-size:14px;color:#8a93a3;margin:4px 0 20px}
+#lockIn{
+  width:100%;min-height:52px;border:1px solid #e2e7f0;border-radius:14px;padding:8px 14px;
+  background:#fff;text-align:center;letter-spacing:2px
+}
+#lockIn:focus{outline:none;border-color:#a9c2ff}
+#lockGo{margin-top:12px}
+.lockerr{color:#e2544c;font-size:13px;min-height:20px;margin-top:10px;font-weight:600}
+.locknote{font-size:12px;color:#aab2c0;line-height:1.6;margin-top:16px}
+
+/* ---------- 吐司提示 ---------- */
+#toast{
+  position:fixed;left:50%;bottom:88px;transform:translate(-50%,20px);z-index:200;
+  background:rgba(24,32,48,.92);color:#fff;font-size:14px;font-weight:600;
+  padding:12px 18px;border-radius:14px;opacity:0;pointer-events:none;transition:.25s;max-width:80vw;text-align:center
+}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>行为积分记账本</h1>
+  <button class="mini-btn" id="btnToday">回到今天</button>
+</div>
+
+<!-- ============ 月历页 ============ -->
+<div id="pageCal">
+  <div class="monthbar">
+    <button class="navbtn" id="prevM">‹</button>
+    <div class="monthtitle" id="mTitle">2026年10月<span id="mSub"></span></div>
+    <button class="navbtn" id="nextM">›</button>
+  </div>
+
+  <div class="sumcard">
+    <div class="row">
+      <div>
+        <div class="lbl">本月累计得分（已发生 <span id="cntDays">0</span> 天）</div>
+        <div class="big"><span id="sumScore">0</span><small>分</small></div>
+      </div>
+      <div style="text-align:right">
+        <div class="lbl">日均</div>
+        <div style="font-size:20px;font-weight:700"><span id="avgScore">0</span> 分</div>
+      </div>
+    </div>
+    <div class="sumgrid">
+      <div><b id="sumPlus">0</b><i>加分合计</i></div>
+      <div><b id="sumMinus">0</b><i>扣分合计</i></div>
+      <div><b id="bestDay">–</b><i>最高单日</i></div>
+    </div>
+  </div>
+
+  <div class="cal">
+    <div class="week">
+      <div class="wd we">日</div><div class="wd">一</div><div class="wd">二</div><div class="wd">三</div>
+      <div class="wd">四</div><div class="wd">五</div><div class="wd we">六</div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+  <div class="tip">点击任意一天，记录当天的行为与加减分</div>
+</div>
+
+<!-- ============ 管理页 ============ -->
+<div id="pageSet" class="hide">
+  <div class="card" style="margin:14px 14px 0">
+    <h3>每日默认行为 <small>勾选即得对应分值</small></h3>
+    <div id="setBeh"></div>
+    <button class="addlink" id="addBeh">＋ 添加行为</button>
+  </div>
+
+  <div class="card">
+    <h3>额外加减分项 <small>点击月历中的某天使用</small></h3>
+    <div class="subttl">加分项</div>
+    <div id="setPlus"></div>
+    <div class="subttl">扣分项</div>
+    <div id="setMinus"></div>
+    <button class="addlink" id="addExtra">＋ 添加加减分项</button>
+  </div>
+
+  <div class="card">
+    <h3>备份与迁移 <small>换手机 / 多人分设备记录时用到</small></h3>
+    <div class="frow" style="margin-bottom:8px">
+      <button class="btn ghost sm" id="btnExport" style="flex:1">⬇ 导出备份文件</button>
+      <button class="btn ghost sm" id="btnCopy" style="flex:1">📋 复制数据文本</button>
+    </div>
+    <button class="btn ghost sm" id="btnImport">⬆ 从备份文件恢复</button>
+    <input type="file" id="fileIn" accept="application/json,.json" class="hide">
+    <div class="hint" id="backupHint">导出为 JSON 文件，可存到网盘或发给自己。</div>
+  </div>
+
+  <div class="card">
+    <h3>访问口令 <small>页面在网上是公开的，可加一道口令</small></h3>
+    <button class="btn ghost sm" id="btnPass">🔒 <span id="passState">未设置口令</span></button>
+    <div class="hint">设置后，打开页面需先输入口令。忘了口令只能清空本页数据重来，请务必先做一次备份。</div>
+  </div>
+
+  <div class="card">
+    <h3>数据</h3>
+    <button class="btn ghost sm" id="btnReset">恢复默认选项（保留已有记录）</button>
+    <div style="height:8px"></div>
+    <button class="btn danger sm" id="btnClear">清空全部记录</button>
+  </div>
+  <div class="tip" style="padding-bottom:24px">数据保存在本机浏览器中，无需联网</div>
+</div>
+
+<div class="tabbar">
+  <button class="tab on" data-tab="cal"><span class="ico">📅</span>月历</button>
+  <button class="tab" data-tab="set"><span class="ico">⚙️</span>管理</button>
+</div>
+
+<!-- ============ 某天详情 ============ -->
+<div class="mask" id="mask"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-hd">
+    <div class="t" id="dTitle">10月10日<em id="dWeek"></em></div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="sc" id="dScore">0</div>
+      <button class="close" id="btnClose">✕</button>
+    </div>
+  </div>
+  <div class="sheet-bd" id="dBody"></div>
+</div>
+
+<!-- ============ 口令锁屏 ============ -->
+<div id="lock" class="lockwrap hide">
+  <div class="lockcard">
+    <div class="lockico">🔒</div>
+    <div class="lockttl">行为积分记账本</div>
+    <div class="locksub">请输入访问口令</div>
+    <input id="lockIn" type="password" autocomplete="current-password" placeholder="访问口令">
+    <button class="btn" id="lockGo">进 入</button>
+    <div class="lockerr" id="lockErr"></div>
+    <div class="locknote">数据保存在本机浏览器，换设备或清理缓存会丢失，请定期导出备份。</div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ========== 数据 ========== */
+var KEY='kid_points_v1';
+function uid(){return 'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+function defBeh(){
+  return [
+    {id:uid(),name:'吃好早餐',points:1},
+    {id:uid(),name:'完成运动',points:1},
+    {id:uid(),name:'完成作业',points:1},
+    {id:uid(),name:'完成英语',points:1},
+    {id:uid(),name:'行为良好',points:1}
+  ];
+}
+function defExtras(){
+  return [
+    {id:uid(),name:'考试测验95分以上',points:2},
+    {id:uid(),name:'运动量超额完成',points:1},
+    {id:uid(),name:'自觉完成各项任务',points:2},
+    {id:uid(),name:'主动帮忙做家务',points:1},
+    {id:uid(),name:'坚持阅读课外书',points:1},
+    {id:uid(),name:'扭计耍赖',points:-1},
+    {id:uid(),name:'大喊大叫',points:-1},
+    {id:uid(),name:'不尊重长辈',points:-2},
+    {id:uid(),name:'拖拉磨蹭',points:-1},
+    {id:uid(),name:'说谎隐瞒',points:-3}
+  ];
+}
+var S;
+function load(){
+  try{
+    var raw=localStorage.getItem(KEY);
+    if(raw){
+      S=JSON.parse(raw);
+      if(!S.behaviors)S.behaviors=defBeh();
+      if(!S.extras)S.extras=defExtras();
+      if(!S.days)S.days={};
+      if(typeof S.pass!=='string')S.pass='';
+      return;
+    }
+  }catch(e){}
+  S={behaviors:defBeh(),extras:defExtras(),days:{},pass:''};
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+/* ========== 日期工具 ========== */
+function pad(n){return n<10?'0'+n:''+n;}
+function ymd(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function parse(s){var p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2]);}
+var TODAY=ymd(new Date());
+var cur=new Date();cur.setDate(1);
+var WK=['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+
+function getDay(ds){
+  if(!S.days[ds])S.days[ds]={done:{},recs:[]};
+  var d=S.days[ds];
+  if(!d.done)d.done={};
+  if(!d.recs)d.recs=[];
+  return d;
+}
+function dayScore(ds){
+  var d=S.days[ds];if(!d)return null;
+  var s=0,any=false;
+  for(var i=0;i<S.behaviors.length;i++){
+    var b=S.behaviors[i];
+    if(d.done&&d.done[b.id]){s+=(+b.points||0);any=true;}
+  }
+  for(var j=0;j<d.recs.length;j++){s+=(+d.recs[j].points||0);any=true;}
+  return any?s:null;
+}
+
+/* ========== 月历渲染 ========== */
+function render(){
+  var y=cur.getFullYear(),m=cur.getMonth();
+  document.getElementById('mTitle').innerHTML=y+'年'+(m+1)+'月<span id="mSub">已记录 '+countRecorded(y,m)+' 天</span>';
+
+  var first=new Date(y,m,1),start=first.getDay();
+  var days=new Date(y,m+1,0).getDate();
+  var html='';
+  for(var i=0;i<start;i++)html+='<div class="cell empty"></div>';
+  var sum=0,cnt=0,plus=0,minus=0,best=null,bestV=-99999;
+  for(var dd=1;dd<=days;dd++){
+    var ds=y+'-'+pad(m+1)+'-'+pad(dd);
+    var sc=dayScore(ds);
+    var cls='cell',inner='<div class="d">'+dd+'</div>';
+    if(sc===null){inner+='<div class="s s-none">·</div>';}
+    else{
+      inner+='<div class="s '+(sc>0?'s-plus':(sc<0?'s-minus':'s-zero'))+'">'+(sc>0?'+':'')+sc+'</div>';
+      cls+=sc>0?' plus':(sc<0?' minus':' has');
+      if(ds<=TODAY){
+        sum+=sc;cnt++;
+        var dv=dayParts(ds);
+        plus+=dv.p;minus+=dv.m;
+        if(sc>bestV){bestV=sc;best=dd;}
+      }
+    }
+    if(ds===TODAY)cls+=' today';
+    html+='<button class="'+cls+'" data-day="'+ds+'">'+inner+'</button>';
+  }
+  document.getElementById('grid').innerHTML=html;
+
+  document.getElementById('sumScore').textContent=(sum>0?'+':'')+sum;
+  document.getElementById('cntDays').textContent=cnt;
+  document.getElementById('avgScore').textContent=cnt?(Math.round(sum/cnt*10)/10):0;
+  document.getElementById('sumPlus').textContent='+'+plus;
+  document.getElementById('sumMinus').textContent=minus;
+  document.getElementById('bestDay').textContent=(best===null?'–':best+'日 '+bestV+'分');
+}
+function dayParts(ds){
+  var d=S.days[ds];var p=0,m=0;
+  if(!d)return{p:0,m:0};
+  for(var i=0;i<S.behaviors.length;i++){var b=S.behaviors[i];if(d.done[b.id]){var v=+b.points||0;if(v>=0)p+=v;else m+=(-v);}}
+  for(var j=0;j<d.recs.length;j++){var v2=+d.recs[j].points||0;if(v2>=0)p+=v2;else m+=(-v2);}
+  return{p:p,m:m};
+}
+function countRecorded(y,m){
+  var n=0,days=new Date(y,m+1,0).getDate();
+  for(var i=1;i<=days;i++){if(dayScore(y+'-'+pad(m+1)+'-'+pad(i))!==null)n++;}
+  return n;
+}
+
+/* ========== 某天详情 ========== */
+var openDS=null,customType=1;
+function openDay(ds){
+  openDS=ds;customType=1;
+  renderDay();
+  document.getElementById('mask').classList.add('show');
+  document.getElementById('sheet').classList.add('show');
+}
+function closeDay(){
+  document.getElementById('mask').classList.remove('show');
+  document.getElementById('sheet').classList.remove('show');
+  openDS=null;render();
+}
+function renderDay(){
+  var d=getDay(openDS),dt=parse(openDS);
+  document.getElementById('dTitle').innerHTML=(dt.getMonth()+1)+'月'+dt.getDate()+'日<em>'+WK[dt.getDay()]+'</em>';
+  var sc=dayScore(openDS)||0;
+  var el=document.getElementById('dScore');
+  el.textContent=(sc>0?'+':'')+sc;
+  el.className='sc '+(sc>0?'s-plus':(sc<0?'s-minus':'s-zero'));
+
+  var h='';
+  /* 默认行为 */
+  h+='<div class="card"><h3>每日行为 <small>完成后点亮</small></h3>';
+  for(var i=0;i<S.behaviors.length;i++){
+    var b=S.behaviors[i],on=d.done[b.id];
+    h+='<button class="beh'+(on?' on':'')+'" data-beh="'+b.id+'">'
+      +'<span class="box">'+(on?'✓':'')+'</span>'
+      +'<span class="nm">'+esc(b.name)+'</span>'
+      +'<span class="pt">'+((+b.points)>0?'+':'')+(+b.points)+'</span></button>';
+  }
+  if(!S.behaviors.length)h+='<div class="empty-tip">还没有行为项，去「管理」添加</div>';
+  h+='</div>';
+
+  /* 已记录加减分 */
+  var plusRecs=[],minusRecs=[];
+  for(var k=0;k<d.recs.length;k++){(+d.recs[k].points>=0?plusRecs:minusRecs).push(d.recs[k]);}
+  h+='<div class="card"><h3>当日加减分 <small>共 '+d.recs.length+' 条</small></h3>';
+  if(!d.recs.length){
+    h+='<div class="empty-tip">还没有加减分记录</div>';
+  }else{
+    h+=recList(plusRecs,'加分');
+    h+=recList(minusRecs,'扣分');
+  }
+  h+='</div>';
+
+  /* 快捷添加 */
+  var P=[],M=[];
+  for(var q=0;q<S.extras.length;q++){(+S.extras[q].points>=0?P:M).push(S.extras[q]);}
+  h+='<div class="card"><h3>快捷加分 <small>点一下即记录</small></h3><div class="chips">';
+  for(var a=0;a<P.length;a++)h+='<button class="chip p" data-ex="'+P[a].id+'">'+esc(P[a].name)+' <b>+'+(+P[a].points)+'</b></button>';
+  h+='</div><button class="addlink" data-custom="1">＋ 自定义加分</button><div id="cw1"></div></div>';
+  h+='<div class="card"><h3>快捷扣分 <small>点一下即记录</small></h3><div class="chips">';
+  for(var c=0;c<M.length;c++)h+='<button class="chip m" data-ex="'+M[c].id+'">'+esc(M[c].name)+' <b>'+(+M[c].points)+'</b></button>';
+  h+='</div><button class="addlink" data-custom="-1">＋ 自定义扣分</button><div id="cw-1"></div></div>';
+
+  document.getElementById('dBody').innerHTML=h;
+}
+function recList(arr,label){
+  if(!arr.length)return '';
+  var h='<div class="subttl">'+label+'（'+arr.length+'）</div>';
+  for(var i=0;i<arr.length;i++){
+    var r=arr[i],v=+r.points;
+    h+='<div class="rec"><div class="l">'
+      +'<div class="n">'+esc(r.name)+'<span class="v '+(v>=0?'s-plus':'s-minus')+'">'+(v>0?'+':'')+v+'</span></div>'
+      +'<input class="note" data-note="'+r.id+'" placeholder="备注：发生了什么事？" value="'+esc(r.note||'')+'">'
+      +'</div><button class="del" data-del="'+r.id+'">🗑</button></div>';
+  }
+  return h;
+}
+function showCustom(sign){
+  customType=sign;
+  var box=document.getElementById('cw'+sign);
+  document.getElementById('cw'+(sign>0?'-1':'1')).innerHTML='';
+  box.innerHTML='<div class="custom">'
+    +'<div class="frow"><div class="seg">'
+    +'<button data-sign="1" class="'+(sign>0?'on':'')+'">加分</button>'
+    +'<button data-sign="-1" class="'+(sign<0?'on m':'')+'">扣分</button>'
+    +'</div><input id="cxName" placeholder="事项名称" maxlength="20"></div>'
+    +'<div class="frow"><input class="w80" id="cxPt" type="number" inputmode="numeric" value="1" min="1" step="1">'
+    +'<input id="cxNote" placeholder="备注（可留空）" maxlength="60"></div>'
+    +'<button class="btn sm" id="cxAdd">添加到 '+((sign>0)?'加分':'扣分')+'记录</button>'
+    +'</div>';
+  setTimeout(function(){var n=document.getElementById('cxName');if(n)n.focus();},60);
+}
+
+/* ========== 事件绑定（事件委托） ========== */
+document.addEventListener('click',function(e){
+  var t=e.target;
+
+  /* 底部 tab */
+  var tab=t.closest?t.closest('.tab'):null;
+  if(tab){
+    var k=tab.getAttribute('data-tab');
+    document.getElementById('pageCal').classList.toggle('hide',k!=='cal');
+    document.getElementById('pageSet').classList.toggle('hide',k!=='set');
+    var ts=document.querySelectorAll('.tab');
+    for(var i=0;i<ts.length;i++)ts[i].classList.toggle('on',ts[i]===tab);
+    return;
+  }
+
+  /* 打开某天 */
+  var cell=t.closest?t.closest('[data-day]'):null;
+  if(cell){openDay(cell.getAttribute('data-day'));return;}
+
+  /* 勾选行为 */
+  var beh=t.closest?t.closest('[data-beh]'):null;
+  if(beh){
+    var d=getDay(openDS),id=beh.getAttribute('data-beh');
+    if(d.done[id])delete d.done[id];else d.done[id]=true;
+    save();renderDay();return;
+  }
+
+  /* 快捷加分/扣分 */
+  var ex=t.closest?t.closest('[data-ex]'):null;
+  if(ex){
+    var eid=ex.getAttribute('data-ex'),it=null;
+    for(var j=0;j<S.extras.length;j++)if(S.extras[j].id===eid)it=S.extras[j];
+    if(it){
+      getDay(openDS).recs.push({id:uid(),name:it.name,points:+it.points,note:''});
+      save();renderDay();
+    }
+    return;
+  }
+
+  /* 自定义面板 */
+  var ct=t.closest?t.closest('[data-custom]'):null;
+  if(ct){
+    var s=+ct.getAttribute('data-custom');
+    var box=document.getElementById('cw'+s);
+    if(box.innerHTML){box.innerHTML='';return;}
+    showCustom(s);return;
+  }
+  var sg=t.closest?t.closest('[data-sign]'):null;
+  if(sg){
+    var ns=+sg.getAttribute('data-sign');
+    var bs=sg.parentNode.querySelectorAll('button');
+    for(var q=0;q<bs.length;q++){
+      var on=(+bs[q].getAttribute('data-sign')===ns);
+      bs[q].className=on?(ns>0?'on':'on m'):'';
+    }
+    customType=ns;
+    document.getElementById('cxAdd').textContent='添加到 '+(ns>0?'加分':'扣分')+'记录';
+    return;
+  }
+  var add=t.id==='cxAdd'?t:null;
+  if(add){
+    var nm=document.getElementById('cxName').value.trim();
+    var pt=parseInt(document.getElementById('cxPt').value,10);
+    if(!nm){alert('请填写事项名称');return;}
+    if(isNaN(pt)||pt<=0){alert('分值请填大于 0 的数字');return;}
+    var nt=document.getElementById('cxNote').value.trim();
+    getDay(openDS).recs.push({id:uid(),name:nm,points:customType*Math.abs(pt),note:nt});
+    save();renderDay();return;
+  }
+
+  /* 删除记录 */
+  var del=t.closest?t.closest('[data-del]'):null;
+  if(del){
+    var rid=del.getAttribute('data-del'),dd=getDay(openDS);
+    for(var r=0;r<dd.recs.length;r++)if(dd.recs[r].id===rid){dd.recs.splice(r,1);break;}
+    if(!dd.recs.length&&!Object.keys(dd.done).length)delete S.days[openDS];
+    save();renderDay();return;
+  }
+});
+
+/* 备注输入 */
+document.addEventListener('input',function(e){
+  var n=e.target.closest?e.target.closest('[data-note]'):null;
+  if(n&&openDS){
+    var rid=n.getAttribute('data-note'),d=getDay(openDS);
+    for(var i=0;i<d.recs.length;i++)if(d.recs[i].id===rid){d.recs[i].note=n.value;break;}
+    save();return;
+  }
+  var f=e.target.closest?e.target.closest('.setrow'):null;
+  if(f){
+    var id=f.getAttribute('data-id'),fld=e.target.getAttribute('data-f');
+    var list=f.getAttribute('data-list');
+    var arr=list==='b'?S.behaviors:S.extras;
+    for(var k=0;k<arr.length;k++){
+      if(arr[k].id===id){
+        if(fld==='name'){arr[k].name=e.target.value;}
+        else{
+          var v=parseInt(e.target.value,10);
+          if(isNaN(v))v=0;
+          if(list==='b'){arr[k].points=v;}
+          else{arr[k].points=arr[k]._neg? -Math.abs(v):Math.abs(v);}
+        }
+        break;
+      }
+    }
+    save();render();
+    var pt=e.target.getAttribute('data-f')==='points';
+    if(pt){e.target.className='ipt '+(e.target.parentNode.querySelector('.ipt').value>=0?'p':'m');}
+    return;
+  }
+});
+
+/* ========== 管理页 ========== */
+function renderSet(){
+  var h='';
+  for(var i=0;i<S.behaviors.length;i++){
+    var b=S.behaviors[i];
+    h+='<div class="mrow setrow" data-id="'+b.id+'" data-list="b">'
+      +'<input class="inm" data-f="name" value="'+esc(b.name)+'" maxlength="20">'
+      +'<input class="ipt '+(b.points>=0?'p':'m')+'" data-f="points" type="number" inputmode="numeric" value="'+(+b.points)+'" step="1">'
+      +'<button class="icobtn" data-delb="'+b.id+'">🗑</button></div>';
+  }
+  document.getElementById('setBeh').innerHTML=h||'<div class="empty-tip">暂无</div>';
+
+  var P=[],M=[];
+  for(var j=0;j<S.extras.length;j++){
+    S.extras[j]._neg=(+S.extras[j].points<0);
+    (S.extras[j]._neg?M:P).push(S.extras[j]);
+  }
+  function rows(a){
+    var s='';
+    for(var i=0;i<a.length;i++){
+      var x=a[i];
+      s+='<div class="mrow setrow" data-id="'+x.id+'" data-list="e">'
+        +'<input class="inm" data-f="name" value="'+esc(x.name)+'" maxlength="20">'
+        +'<input class="ipt '+(x._neg?'m':'p')+'" data-f="points" type="number" inputmode="numeric" value="'+Math.abs(+x.points)+'" step="1" min="1">'
+        +'<button class="icobtn" data-dele="'+x.id+'">🗑</button></div>';
+    }
+    return s||'<div class="empty-tip">暂无</div>';
+  }
+  document.getElementById('setPlus').innerHTML=rows(P);
+  document.getElementById('setMinus').innerHTML=rows(M);
+}
+
+document.addEventListener('click',function(e){
+  var t=e.target;
+  if(t.id==='addBeh'){
+    S.behaviors.push({id:uid(),name:'新行为',points:1});save();renderSet();render();return;
+  }
+  if(t.id==='addExtra'){
+    S.extras.push({id:uid(),name:'新事项',points:1});save();renderSet();render();return;
+  }
+  var db=t.closest?t.closest('[data-delb]'):null;
+  if(db){
+    var idb=db.getAttribute('data-delb');
+    for(var i=0;i<S.behaviors.length;i++)if(S.behaviors[i].id===idb){S.behaviors.splice(i,1);break;}
+    for(var ds in S.days){if(S.days[ds].done)delete S.days[ds].done[idb];}
+    save();renderSet();render();return;
+  }
+  var de=t.closest?t.closest('[data-dele]'):null;
+  if(de){
+    var ide=de.getAttribute('data-dele');
+    for(var j=0;j<S.extras.length;j++)if(S.extras[j].id===ide){S.extras.splice(j,1);break;}
+    save();renderSet();render();return;
+  }
+  if(t.id==='btnReset'){
+    if(confirm('恢复默认的 5 个行为与常用加减分项？已有记录会保留。')){
+      S.behaviors=defBeh();S.extras=defExtras();save();renderSet();render();
+    }
+    return;
+  }
+  if(t.id==='btnClear'){
+    if(confirm('确定清空全部记录？此操作不可撤销。')){
+      S.days={};save();render();renderSet();
+    }
+    return;
+  }
+  if(t.id==='btnPass'){setPass();return;}
+  if(t.id==='btnExport'){doExport();return;}
+  if(t.id==='btnCopy'){doCopy();return;}
+  if(t.id==='btnImport'){document.getElementById('fileIn').click();return;}
+});
+
+/* ========== 备份与恢复 ========== */
+function stamp(){
+  var d=new Date();
+  return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'-'+pad(d.getHours())+pad(d.getMinutes());
+}
+function doExport(){
+  try{
+    var txt=JSON.stringify(S);
+    var blob=new Blob([txt],{type:'application/json'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url;a.download='jifen-backup-'+stamp()+'.json';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url);},2000);
+    toast('已导出备份文件');
+  }catch(e){alert('导出失败：'+e.message);}
+}
+function doCopy(){
+  var txt=JSON.stringify(S);
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){toast('数据已复制到剪贴板');},function(){fallbackCopy(txt);});
+  }else fallbackCopy(txt);
+}
+function fallbackCopy(txt){
+  var ta=document.createElement('textarea');
+  ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');toast('数据已复制到剪贴板');}
+  catch(e){prompt('复制失败，请手动复制下面的内容：',txt);}
+  document.body.removeChild(ta);
+}
+document.getElementById('fileIn').addEventListener('change',function(ev){
+  var f=ev.target.files&&ev.target.files[0];
+  if(!f)return;
+  var rd=new FileReader();
+  rd.onload=function(){
+    try{
+      var o=JSON.parse(rd.result);
+      if(!o||!o.behaviors||!o.days)throw new Error('文件格式不对');
+      var oldPass=S.pass;
+      S={behaviors:o.behaviors,extras:o.extras||[],days:o.days,pass:oldPass};
+      if(!S.extras.length)S.extras=defExtras();
+      save();render();renderSet();syncPassUI();
+      toast('已恢复备份：共 '+Object.keys(S.days).length+' 天记录');
+    }catch(e){alert('恢复失败：'+e.message);}
+    ev.target.value='';
+  };
+  rd.readAsText(f);
+});
+
+/* ========== 访问口令 ========== */
+function syncPassUI(){
+  document.getElementById('passState').textContent=S.pass?'已开启，点此修改 / 取消':'未设置口令';
+}
+function setPass(){
+  if(!S.pass){
+    var p=prompt('设置打开页面时的访问口令（4 位以上）：');
+    if(p===null)return;
+    p=p.trim();
+    if(!p)return;
+    if(p.length<4){alert('口令太短，请至少 4 位');return;}
+    if(!confirm('开启后每次打开本页都要输入口令。\n忘掉口令无法找回，只能清空数据重来。\n确定开启？'))return;
+    S.pass=p;save();syncPassUI();toast('口令已开启');
+    return;
+  }
+  var old=prompt('请输入当前口令：');
+  if(old===null)return;
+  if(old!==S.pass){alert('口令不正确');return;}
+  var np=prompt('请输入新口令（直接确定则取消口令保护）：');
+  if(np===null)return;
+  np=np.trim();
+  if(!np){S.pass='';save();syncPassUI();toast('已取消口令保护');return;}
+  if(np.length<4){alert('口令太短，请至少 4 位');return;}
+  S.pass=np;save();syncPassUI();toast('口令已更新');
+}
+function checkLock(){
+  if(S.pass){
+    document.body.classList.add('locked');
+    document.getElementById('lock').classList.remove('hide');
+    document.getElementById('lockErr').textContent='';
+    document.getElementById('lockIn').value='';
+  }else{
+    document.body.classList.remove('locked');
+    document.getElementById('lock').classList.add('hide');
+  }
+}
+function tryUnlock(){
+  var v=document.getElementById('lockIn').value;
+  if(v===S.pass){
+    document.body.classList.remove('locked');
+    document.getElementById('lock').classList.add('hide');
+  }else{
+    document.getElementById('lockErr').textContent='口令不正确，请重试';
+    document.getElementById('lockIn').value='';
+  }
+}
+document.getElementById('lockGo').onclick=tryUnlock;
+document.getElementById('lockIn').addEventListener('keydown',function(e){if(e.key==='Enter')tryUnlock();});
+
+/* ========== 吐司 ========== */
+var tmr=null;
+function toast(msg){
+  var el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(tmr);tmr=setTimeout(function(){el.classList.remove('show');},2200);
+}
+
+/* ========== PWA manifest（动态注入，保证 start_url 正确） ========== */
+try{
+  var mf={
+    name:'行为积分记账本',short_name:'积分本',
+    start_url:location.pathname,scope:location.pathname.replace(/[^\/]*$/,''),
+    display:'standalone',orientation:'portrait',
+    theme_color:'#4f7cff',background_color:'#f3f6fa',
+    description:'孩子每天行为完成情况奖惩记账本'
+  };
+  var lk=document.createElement('link');
+  lk.rel='manifest';
+  lk.href='data:application/manifest+json,'+encodeURIComponent(JSON.stringify(mf));
+  document.head.appendChild(lk);
+}catch(e){}
+
+/* Service Worker：与 sw.js 一起使用时可实现真正的离线打开 */
+if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('./sw.js').catch(function(){});
+  });
+}
+
+/* ========== 其它 ========== */
+document.getElementById('prevM').onclick=function(){cur.setMonth(cur.getMonth()-1);render();};
+document.getElementById('nextM').onclick=function(){cur.setMonth(cur.getMonth()+1);render();};
+document.getElementById('btnToday').onclick=function(){var n=new Date();cur=new Date(n.getFullYear(),n.getMonth(),1);render();};
+document.getElementById('btnClose').onclick=closeDay;
+document.getElementById('mask').onclick=closeDay;
+
+load();render();renderSet();syncPassUI();checkLock();
+})();
+</script>
+</body>
+</html>
